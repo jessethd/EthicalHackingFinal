@@ -87,6 +87,8 @@ subprocess.call(['cp', './website/save.php', '/var/www/html/'])
 subprocess.call(['cp', '-r','./website/images', '/var/www/html/'])
 subprocess.call(['cp', '-r','./website/include', '/var/www/html/'])
 subprocess.call(['cp', './website/log.txt', '/var/www/html/'])
+# Give write access to the log.txt file
+subprocess.call(['chmod', '777', '/var/www/html/log.txt'])
 
 # Start the Apache sever to run fake website
 subprocess.call(['/etc/init.d/apache2', 'start'])
